@@ -21,13 +21,16 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import org.hyperledger.aries.api.credential.Credential;
 import org.hyperledger.aries.api.jsonld.VerifiableCredential;
 import org.hyperledger.aries.config.GsonConfig;
 import org.hyperledger.oa.api.CredentialType;
 import org.hyperledger.oa.impl.aries.SchemaService;
 import org.hyperledger.oa.impl.util.Converter;
 import org.hyperledger.oa.model.BPASchema;
+import org.hyperledger.oa.model.MyCredential;
 import org.hyperledger.oa.model.MyDocument;
+import org.hyperledger.oa.repository.PartnerRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,6 +56,9 @@ class VPManagerTest {
 
     @Mock
     private Identity identity;
+
+    @Mock
+    private PartnerRepository partnerRepository;
 
     @InjectMocks
     private final VPManager vpm = new VPManager();
@@ -124,6 +130,27 @@ class VPManagerTest {
                 "\"key1\":{\"@id\":\"sc:key1\"},\"key2\":{\"@id\":\"sc:key2\"}}}]";
 
         assertEquals(expected, actual);
+    }
+
+    @Test
+    void buildFromCredentialCommReg() {
+        String ariesCredential = "{\"attrs\":{\"did\":\"did:sov:iil:9iDuvPqcGmpLrn67BMHwwB\"," +
+                "\"companyName\":\"ALDI AHEAD GmbH\"},\"referent\":\"3512fa49-1bce-42d6-b73f-79742645a9cc\"," +
+                "\"schemaId\":\"8faozNpSjFfPJXYtgcPtmJ:2:commercialregister:1.2\",\"credentialDefinitionId\":" +
+                "\"8faozNpSjFfPJXYtgcPtmJ:3:CL:1041:Commercial Registry Entry (Open Corporates)\"}";
+
+        Credential credential = gson.fromJson(ariesCredential, Credential.class);
+        MyCredential myCredential = MyCredential
+                .builder()
+                .id(UUID.randomUUID())
+                .credential(c.toMap(credential))
+                .type(CredentialType.COMMERCIAL_REGISTER_CREDENTIAL)
+                .build();
+        VerifiableCredential.VerifiableIndyCredential indyCred = vpm.buildFromCredential(myCredential, "");
+        assertEquals(2, c.toMap(indyCred.getCredentialSubject()).size());
+        assertEquals(2, indyCred.getType().size());
+        assertEquals(2, indyCred.getContext().size());
+        // System.out.println(GsonConfig.prettyPrinter().toJson(indyCred));
     }
 
     private Map<String, Object> createMap(String json) throws JsonProcessingException {
