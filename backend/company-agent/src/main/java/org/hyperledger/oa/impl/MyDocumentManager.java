@@ -18,6 +18,7 @@
 package org.hyperledger.oa.impl;
 
 import lombok.NonNull;
+import org.apache.commons.lang3.StringUtils;
 import org.hyperledger.oa.api.CredentialType;
 import org.hyperledger.oa.api.MyDocumentAPI;
 import org.hyperledger.oa.api.exception.WrongApiUsageException;
@@ -49,10 +50,13 @@ public class MyDocumentManager {
     @Inject
     Optional<LabelStrategy> labelStrategy;
 
-    @SuppressWarnings("boxing")
     public MyDocumentAPI saveNewDocument(@NonNull MyDocumentAPI document) {
         // there should be only one Masterdata credential
         verifyOnlyOneMasterdata(document);
+
+        if (CredentialType.INDY_CREDENTIAL.equals(document.getType()) && StringUtils.isEmpty(document.getSchemaId())) {
+            throw new WrongApiUsageException("A document of type indy_credential must have a schema id set.");
+        }
 
         labelStrategy.ifPresent(strategy -> strategy.apply(document));
         final MyDocument vc = docRepo.save(converter.toModelObject(document));
@@ -67,7 +71,7 @@ public class MyDocumentManager {
         final Optional<MyDocument> dbCred = docRepo.findById(id);
 
         if (dbCred.isEmpty()) {
-            throw new WrongApiUsageException("Credential does not exist in database");
+            throw new WrongApiUsageException("Document does not exist in database");
         }
 
         if (!dbCred.get().getType().equals(document.getType())) {
@@ -102,7 +106,7 @@ public class MyDocumentManager {
     private void verifyOnlyOneMasterdata(MyDocumentAPI doc) {
         if (doc.getType().equals(CredentialType.ORGANIZATIONAL_PROFILE_CREDENTIAL)) {
             docRepo.findAll().forEach(d -> {
-                if (d.getType().equals(CredentialType.ORGANIZATIONAL_PROFILE_CREDENTIAL)) {
+                if (CredentialType.ORGANIZATIONAL_PROFILE_CREDENTIAL.equals(d.getType())) {
                     throw new WrongApiUsageException("Organizational profile already exists, use update instead");
                 }
             });
