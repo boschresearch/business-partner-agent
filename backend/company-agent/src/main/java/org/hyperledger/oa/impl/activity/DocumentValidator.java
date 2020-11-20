@@ -33,8 +33,9 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Does some validation on incoming {@link MyDocumentAPI} objects. Like this we make sure that
- * the system is in a defined state and we do not have to do validation later.
+ * Does some validation on incoming {@link MyDocumentAPI} objects. Like this we
+ * make sure that the system is in a defined state and we do not have to do
+ * validation later.
  */
 @Singleton
 public class DocumentValidator {

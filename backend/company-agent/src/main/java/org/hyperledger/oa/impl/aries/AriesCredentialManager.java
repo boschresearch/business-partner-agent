@@ -117,9 +117,9 @@ public class AriesCredentialManager {
                     final Optional<org.hyperledger.oa.model.BPASchema> s = schemaService
                             .getSchemaFor(dbDoc.get().getSchemaId());
                     if (s.isPresent()) {
-                        final Optional<String> baCredDefId = credLookup.findCredentialDefinitionId(
+                        final Optional<String> credDefId = credLookup.findCredentialDefinitionId(
                                 partnerId, s.get().getSeqNo());
-                        if (baCredDefId.isPresent()) {
+                        if (credDefId.isPresent()) {
                             ac.issueCredentialSendProposal(
                                     CredentialProposalRequest
                                             .builder()
@@ -128,11 +128,13 @@ public class AriesCredentialManager {
                                             .credentialProposal(
                                                     new CredentialPreview(
                                                             CredentialAttributes.from(dbDoc.get().getDocument())))
-                                            .credentialDefinitionId(baCredDefId.get())
+                                            .credentialDefinitionId(credDefId.get())
                                             .build());
                         } else
                             throw new PartnerException("Found no matching credential definition id. "
                                     + "Partner can not issue bank account credentials");
+                    } else {
+                        throw new PartnerException("No configured schema found for id: " + dbDoc.get().getSchemaId());
                     }
                 } catch (IOException e) {
                     throw new NetworkException("No aries connection", e);
