@@ -40,6 +40,10 @@ public interface PartnerRepository extends CrudRepository<Partner, UUID> {
 
     Number updateByDid(String did, Map<String, Object> supportedCredentials);
 
+    Number updateVerifiablePresentation(@Id UUID id,
+            Map<String, Object> verifiablePresentation, Boolean valid,
+            String label, String did);
+
     Optional<Partner> findByDid(String did);
 
     Optional<Partner> findByLabel(String label);
